@@ -1,0 +1,239 @@
+SYNAPSEINBOX CHEAT SHEET
+========================
+
+QUICK START
+-----------
+from synapseinbox import SynapseInbox
+inbox = SynapseInbox(agent_name="ATLAS")
+
+BASIC QUERIES
+-------------
+# Unread messages
+unread = inbox.unread()
+
+# All messages
+all_msgs = inbox.all_messages()
+
+# Filter by sender
+from_forge = inbox.filter(from_agent="FORGE")
+
+# Filter by recipient
+to_me = inbox.filter(to_agent="ATLAS")
+
+# Filter by priority
+urgent = inbox.filter(priority="HIGH")
+
+# Unread only
+unread_urgent = inbox.filter(priority="HIGH", unread_only=True)
+
+# Combine filters
+forge_urgent = inbox.filter(from_agent="FORGE", priority="HIGH", unread_only=True)
+
+SEARCH
+------
+# Search subject and body
+results = inbox.search("SynapseWatcher")
+results = inbox.search("integration")
+
+MESSAGE MANAGEMENT
+------------------
+# Mark as read
+inbox.mark_read(msg_id)
+
+# Mark all as read
+inbox.mark_all_read()
+
+# Archive message
+inbox.archive(msg_id)
+
+# Unarchive message
+inbox.unarchive(msg_id)
+
+# Include archived in results
+results = inbox.filter(include_archived=True)
+
+STATISTICS
+----------
+# Get inbox stats
+stats = inbox.stats()
+
+# Access stats
+print(f"Total: {stats['total']}")
+print(f"Unread: {stats['unread']}")
+print(f"Archived: {stats['archived']}")
+print(f"By sender: {stats['by_sender']}")
+print(f"By priority: {stats['by_priority']}")
+print(f"By recipient: {stats['by_recipient']}")
+
+PRIORITY LEVELS
+---------------
+CRITICAL  - Emergency, drop everything
+HIGH      - Urgent, do today
+NORMAL    - Standard priority
+LOW       - Do when time permits
+
+MESSAGE OBJECT
+--------------
+msg.msg_id       - Unique message ID
+msg.from_agent   - Sender name
+msg.to           - List of recipients
+msg.subject      - Message subject
+msg.body         - Message body (dict)
+msg.priority     - Priority level
+msg.timestamp    - ISO timestamp
+msg.filepath     - Source file path
+
+COMMON PATTERNS
+---------------
+# Morning check
+unread = inbox.unread()
+print(f"{len(unread)} unread messages")
+
+# Priority workflow
+urgent = inbox.filter(priority="HIGH", unread_only=True)
+for msg in urgent:
+    handle_message(msg)
+    inbox.mark_read(msg.msg_id)
+
+# Find specific message
+results = inbox.search("keyword")
+from_forge = [m for m in results if m.from_agent == "FORGE"]
+
+# Inbox zero
+for msg in inbox.unread():
+    process(msg)
+    inbox.mark_read(msg.msg_id)
+
+# Check messages from orchestrator
+forge_msgs = inbox.filter(from_agent="FORGE", unread_only=True)
+
+# Archive old low-priority
+old_low = inbox.filter(priority="LOW")
+for msg in old_low:
+    if is_old(msg):
+        inbox.archive(msg.msg_id)
+
+COMMAND LINE
+------------
+# Unread messages
+python synapseinbox.py unread --agent ATLAS
+
+# From specific agent
+python synapseinbox.py from FORGE --agent ATLAS
+python synapseinbox.py from FORGE --agent ATLAS --unread
+
+# To specific agent
+python synapseinbox.py to ATLAS --agent ATLAS
+
+# Search
+python synapseinbox.py search "keyword" --agent ATLAS
+python synapseinbox.py search "keyword" --agent ATLAS --unread
+
+# List with filters
+python synapseinbox.py list --agent ATLAS
+python synapseinbox.py list --agent ATLAS --priority HIGH
+python synapseinbox.py list --agent ATLAS --limit 10
+
+# Mark as read
+python synapseinbox.py mark-read MSG_ID --agent ATLAS
+
+# Mark all as read
+python synapseinbox.py mark-all-read --agent ATLAS
+
+# Archive
+python synapseinbox.py archive MSG_ID --agent ATLAS
+
+# Statistics
+python synapseinbox.py stats --agent ATLAS
+
+# Clear state
+python synapseinbox.py clear-state --agent ATLAS
+
+STATE FILE
+----------
+Location: ~/.synapseinbox_[agent].json
+
+Structure:
+{
+  "read_messages": ["msg_001", "msg_002", ...],
+  "archived": ["old_msg_123", ...]
+}
+
+# State persists across sessions
+# Delete file to reset read/archived tracking
+
+CUSTOM SYNAPSE PATH
+-------------------
+from pathlib import Path
+inbox = SynapseInbox(
+    agent_name="ATLAS",
+    synapse_path=Path("/custom/path")
+)
+
+INTEGRATION
+-----------
+# With SynapseLink
+from synapselink import SynapseLink
+synapse = SynapseLink()
+synapse.send_message(to="ATLAS", subject="Test", body={})
+
+# With SynapseWatcher
+from synapsewatcher import SynapseWatcher
+def check_inbox():
+    inbox = SynapseInbox(agent_name="ATLAS")
+    unread = inbox.unread()
+    if unread:
+        print(f"{len(unread)} unread!")
+
+watcher = SynapseWatcher()
+watcher.add_callback(check_inbox, interval=300)
+
+# With TaskQueuePro
+from taskqueuepro import TaskQueuePro
+queue = TaskQueuePro()
+for msg in inbox.filter(priority="HIGH", unread_only=True):
+    queue.add_task(title=msg.subject, priority="HIGH")
+    inbox.mark_read(msg.msg_id)
+
+TIPS
+----
+• Start with inbox.unread() to see what needs attention
+• Use priority filters for urgent-first workflow
+• Search is case-insensitive and checks subject + body
+• Archive old messages to keep inbox clean without deleting
+• Use inbox.stats() to understand communication patterns
+• Combine filters for precise queries
+• Mark messages as read after processing to track progress
+• Use with SynapseWatcher for automated monitoring
+
+TROUBLESHOOTING
+---------------
+• Messages not showing? Check if archived (include_archived=True)
+• Can't find message? Try inbox.all_messages() or search()
+• State corrupted? Delete ~/.synapseinbox_[agent].json to reset
+• Search not working? Try variations or use filter() instead
+• Agent name is case-sensitive (ATLAS, not atlas)
+
+WORKFLOWS
+---------
+# Morning routine
+1. inbox.unread() - see what's new
+2. inbox.filter(priority="HIGH", unread_only=True) - urgent first
+3. inbox.filter(from_agent="FORGE") - check orchestrator
+4. Process messages, mark as read
+
+# Inbox zero
+1. for msg in inbox.unread(): process and mark_read
+2. Archive old low-priority messages
+3. inbox.stats() to confirm zero unread
+
+# Project research
+1. inbox.search("project_name") - find all related
+2. Filter by sender or priority
+3. Review chronologically
+
+LINKS
+-----
+Full docs: README.md
+Examples: EXAMPLES.md
+GitHub: https://github.com/DonkRonk17/SynapseInbox
