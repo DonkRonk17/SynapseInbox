@@ -1,3 +1,5 @@
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/5155c523-0331-41b1-9ec6-400e58fed2db" />
+
 # SynapseInbox v1.0
 
 **Advanced Inbox Management for THE_SYNAPSE**
@@ -553,6 +555,9 @@ pip install .
 ```
 
 ---
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/85b1997b-55b1-4e4c-ab3f-8a240efe6097" />
+
 
 ## 🤝 **Contributing**
 
